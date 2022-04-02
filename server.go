@@ -10,7 +10,7 @@ type Server struct {
 	Port int
 }
 
-func (this *Server) NewServer(ip string, port int) *Server {
+func NewServer(ip string, port int) *Server {
 	server := &Server{
 		Ip:   ip,
 		Port: port,
@@ -27,7 +27,7 @@ func (this *Server) Start() {
 	listen, err := net.Listen("tcp", fmt.Sprintf("%s:%d", this.Ip, this.Port))
 	if err != nil {
 		fmt.Println("listen err:", err)
-		return 
+		return
 	}
 
 	defer listen.Close()
