@@ -27,7 +27,7 @@ func NewUser(connect net.Conn) *User {
 func (this *User) ListenChannle() {
 	for {
 		msg := <-this.Channle
-		this.connect.Write([]byte(msg + "\n"))
+		this.SendMsg(msg)
 	}
 }
 
@@ -43,12 +43,43 @@ func (this *User) Online() {
 func (this *User) Offline() {
 	//map放入用户
 	this.server.Lock.Lock()
-	delete(this.server.Map,this.Name)
+	delete(this.server.Map, this.Name)
 	this.server.Lock.Unlock()
 	//广播上线
 	this.server.BroadCast(this, "已下线")
 }
 
 func (this *User) DoMessage(msg string) {
-	this.server.BroadCast(this,msg)
+	if msg == "who" {
+
+		this.server.Lock.Lock()
+		for _, user := range this.server.Map {
+			this.SendMsg("[" + user.Name + "]" + "在线")
+		}
+		this.server.Lock.Unlock()
+
+	} else if len(msg) > 7 && msg[:7] == "rename|" {
+		newName := msg[7:]
+
+		_, ok := this.server.Map[newName]
+
+		if ok {
+			this.SendMsg("用户名已被使用")
+		} else {
+			this.server.Lock.Lock()
+			delete(this.server.Map, this.Name)
+			this.server.Map[newName] = this
+			this.server.Lock.Unlock()
+
+			this.Name = newName
+			this.SendMsg("已更新用户名" + newName)
+		}
+
+	} else {
+		this.server.BroadCast(this, msg)
+	}
+}
+
+func (this *User) SendMsg(msg string) {
+	this.connect.Write([]byte(msg + "\n"))
 }
