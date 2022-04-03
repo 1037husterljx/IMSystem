@@ -28,12 +28,8 @@ func (this *Server) handle(connect net.Conn) {
 	fmt.Println("连接建立成功")
 
 	user := NewUser(connect)
-	//map放入用户
-	this.Lock.Lock()
-	this.Map[user.Name] = user
-	this.Lock.Unlock()
-	//广播上线
-	this.BroadCast(user, "已上线")
+	
+	user.Online()
 
 	go func() {
 		buf := make([]byte, 4096)
@@ -41,7 +37,8 @@ func (this *Server) handle(connect net.Conn) {
 		n, err := connect.Read(buf)
 
 		if n == 0 {
-			this.BroadCast(user, "已下线")
+			user.Offline()
+			return
 		}
 
 		if err != nil && err != io.EOF {
@@ -51,7 +48,7 @@ func (this *Server) handle(connect net.Conn) {
 		//去掉\n
 		msg := buf[:n-1]
 
-		this.BroadCast(user, string(msg))
+		user.DoMessage(string(msg))
 	}()
 
 	select {}

@@ -7,6 +7,7 @@ type User struct {
 	Addr    string
 	connect net.Conn
 	Channle chan string
+	server  *Server
 }
 
 func NewUser(connect net.Conn) *User {
@@ -28,4 +29,26 @@ func (this *User) ListenChannle() {
 		msg := <-this.Channle
 		this.connect.Write([]byte(msg + "\n"))
 	}
+}
+
+func (this *User) Online() {
+	//map放入用户
+	this.server.Lock.Lock()
+	this.server.Map[this.Name] = this
+	this.server.Lock.Unlock()
+	//广播上线
+	this.server.BroadCast(this, "已上线")
+}
+
+func (this *User) Offline() {
+	//map放入用户
+	this.server.Lock.Lock()
+	delete(this.server.Map,this.Name)
+	this.server.Lock.Unlock()
+	//广播上线
+	this.server.BroadCast(this, "已下线")
+}
+
+func (this *User) DoMessage(msg string) {
+	this.server.BroadCast(this,msg)
 }
