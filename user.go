@@ -1,6 +1,9 @@
 package main
 
-import "net"
+import (
+	"net"
+	"strings"
+)
 
 type User struct {
 	Name    string
@@ -75,6 +78,27 @@ func (this *User) DoMessage(msg string) {
 			this.SendMsg("已更新用户名" + newName)
 		}
 
+	} else if len(msg) > 4 && msg[:3] == "to|" {
+		remoteName := strings.Split(msg, "|")[1]
+
+		if remoteName == "" {
+			this.DoMessage("请使用 to|name|消息 的格式")
+		}
+
+		remoteUser, ok := this.server.Map[remoteName]
+
+		if !ok {
+			this.SendMsg("用户不存在")
+			return
+		}
+
+		content := strings.Split(msg, "|")[2]
+
+		if content == "" {
+			this.DoMessage("请使用 to|name|消息 的格式")
+		}
+
+		remoteUser.DoMessage(this.Name + "对你说" + content)
 	} else {
 		this.server.BroadCast(this, msg)
 	}

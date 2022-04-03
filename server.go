@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"time"
 )
 
 type Server struct {
@@ -28,8 +29,10 @@ func (this *Server) handle(connect net.Conn) {
 	fmt.Println("连接建立成功")
 
 	user := NewUser(connect)
-	
+
 	user.Online()
+
+	isLiveChannle := make(chan bool)
 
 	go func() {
 		buf := make([]byte, 4096)
@@ -49,9 +52,19 @@ func (this *Server) handle(connect net.Conn) {
 		msg := buf[:n-1]
 
 		user.DoMessage(string(msg))
-	}()
 
-	select {}
+		isLiveChannle <- true
+	}()
+	for {
+		select {
+		case <-isLiveChannle:
+		case <-time.After(time.Second * 10):
+			user.SendMsg("你被踢了")
+			close(user.Channle)
+			connect.Close()
+			return
+		}
+	}
 }
 
 func (this *Server) BroadCast(user *User, msg string) {
