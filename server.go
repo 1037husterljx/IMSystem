@@ -18,8 +18,10 @@ type Server struct {
 
 func NewServer(ip string, port int) *Server {
 	server := &Server{
-		Ip:   ip,
-		Port: port,
+		Ip:      ip,
+		Port:    port,
+		Map:     make(map[string]*User),
+		Channle: make(chan string),
 	}
 
 	return server
@@ -28,7 +30,7 @@ func NewServer(ip string, port int) *Server {
 func (this *Server) handle(connect net.Conn) {
 	fmt.Println("连接建立成功")
 
-	user := NewUser(connect)
+	user := NewUser(connect,this)
 
 	user.Online()
 
@@ -55,6 +57,7 @@ func (this *Server) handle(connect net.Conn) {
 
 		isLiveChannle <- true
 	}()
+
 	for {
 		select {
 		case <-isLiveChannle:

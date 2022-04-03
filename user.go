@@ -13,12 +13,13 @@ type User struct {
 	server  *Server
 }
 
-func NewUser(connect net.Conn) *User {
+func NewUser(connect net.Conn,server *Server) *User {
 	user := &User{
 		Name:    connect.RemoteAddr().String(),
 		Addr:    connect.RemoteAddr().String(),
 		connect: connect,
 		Channle: make(chan string),
+		server: server,
 	}
 
 	//监听Channel
